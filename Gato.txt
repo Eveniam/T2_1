@@ -1,0 +1,185 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.UIElements;
+
+public class Gato : MonoBehaviour
+{
+    
+    public float JumpForce = 10;
+    public float Velocity = 10;
+    private bool puedoEscalar;
+    public GameObject BulletPrefab;
+    public AudioClip SaltoAudioClip;
+    public AudioClip FinalBossAudioClip;
+    public AudioClip disparo;
+    
+    
+    private Rigidbody2D _rb;
+    private Animator _animator;
+    private SpriteRenderer _sr;
+    private AudioSource _audioSource;
+    private GameObject cameraGO;
+    public PuntajeManagerController puntajeManagerController;
+    
+    private static readonly string ANIMATOR_STATE = "Estado";
+    private static readonly int ANIMATOR_JUMP = 2;
+    private static readonly int ANIMATOR_IDLE = 0;
+    private static readonly int ANIMATOR_RUN = 1;
+    private static readonly int ANIMATOR_SLICE = 3;
+
+    private static readonly int RIGHT = 1;
+    private static readonly int LEFT = -1;
+    private static readonly int UP = 1;
+    private static readonly int DOWN = -1;
+
+    private PuntajeManagerController _controller;
+    public void SetController(PuntajeManagerController controller)
+    {
+        _controller = controller;
+    }
+    
+    void Start()
+    {
+        //transform.Translate(velocidadx * Time.deltaTime, 0, 0);
+        _controller = GameObject.Find("PuntajeManager").GetComponent<PuntajeManagerController>();
+        _rb = GetComponent<Rigidbody2D>();
+        _animator = GetComponent<Animator>();
+        _sr = GetComponent<SpriteRenderer>();
+        _audioSource = GetComponent<AudioSource>();
+        cameraGO = GameObject.Find("Main Camera");
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        /*GetKey -> Mientras presiono la tecla
+         GetKeyDown -> Cuando presiono la tecla
+         GetKeyUp -> Cuando suelto la tecla
+         */
+        _rb.velocity = new Vector2(0, _rb.velocity.y);
+        ChangeAnimation(ANIMATOR_IDLE);
+
+        if (Input.GetKey(KeyCode.RightArrow)) // SI presiono flecha a la derecha
+        {
+            Desplazarse(RIGHT);
+        }
+        
+        if (Input.GetKey(KeyCode.LeftArrow)) // SI presiono flecha a la izquierda
+        {
+            Desplazarse(LEFT);
+        }
+
+        if (Input.GetKey(KeyCode.C))
+        {
+            Deslizarse();
+        }
+
+        if (Input.GetKey(KeyCode.UpArrow) && puedoEscalar)
+        {
+            DesplazarArriba(UP);
+        }
+        
+        if (Input.GetKeyUp(KeyCode.Space))
+        {
+            _rb.AddForce(Vector2.up * JumpForce, ForceMode2D.Impulse);
+            _audioSource.PlayOneShot(SaltoAudioClip);
+            ChangeAnimation(ANIMATOR_JUMP);
+        }
+
+        if (Input.GetKeyUp(KeyCode.X))
+        {
+            Disparar();
+        }
+    }
+    
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        var tag = other.gameObject.tag;
+        if (tag == "Plataforma")
+        {
+            puedoEscalar = true;
+        }
+        if (tag == "Moneda2")
+        {
+            Destroy(other.gameObject);
+            _controller.IncrementarPuntaje(10);
+        }
+
+        if (tag == "Moneda1")
+        {
+            Destroy(other.gameObject);
+            _controller.IncrementarPuntaje(20);
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        var tag = other.gameObject.tag;
+        if (tag == "Plataforma")
+        {
+            puedoEscalar = false;
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D other)
+    {
+        Debug.Log(other.gameObject.name);
+        var tag = other.gameObject.tag;
+        if (tag == "Enemy")
+        {
+            Destroy(this.gameObject);
+            //Destroy(other.gameObject);
+        }
+
+    }
+
+    private void Disparar(){
+        //colocar codigo para crear elementos
+        var x = this.transform.position.x;
+        var y = this.transform.position.y;
+        var bulletGO = Instantiate(BulletPrefab, new Vector3(x+2, y), Quaternion.identity) as GameObject;
+        var controller = bulletGO.GetComponent<BulletController>();
+        _audioSource.PlayOneShot(disparo);
+        if (_sr.flipX)
+        {
+            controller.velocidad *= -1;
+        }
+    }
+    private void OnTriggerEnter2D(Collider2D col)
+    {
+        var tag = col.gameObject.tag;
+        if (tag == "Traspasable")
+        {
+            Debug.Log("Cambiar Audio");
+            var audioSource = cameraGO.GetComponent<AudioSource>();
+            audioSource.clip = FinalBossAudioClip;
+            audioSource.Play();
+        }
+    }
+
+    private void DesplazarArriba(int position)
+    {
+        _rb.velocity = new Vector2(_rb.velocity.x, Velocity * position);
+    }
+    
+    private void Deslizarse()
+    {
+        ChangeAnimation(ANIMATOR_SLICE);
+    }
+    private void Desplazarse(int position)
+    {
+        _rb.velocity = new Vector2(Velocity * position, _rb.velocity.y);
+        _sr.flipX = position == LEFT;
+        ChangeAnimation(ANIMATOR_RUN);
+    }
+
+    private void ChangeAnimation(int animation)
+    {
+        _animator.SetInteger(ANIMATOR_STATE, animation);
+    }
+    
+}

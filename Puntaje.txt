@@ -1,0 +1,20 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class PuntajeManagerController : MonoBehaviour
+{
+    // Start is called before the first frame update
+    public Text PuntajeTexto;
+    private int puntaje;
+
+    public void IncrementarPuntaje(int puntos)
+    {
+        puntaje += puntos;
+    }
+    void Update()
+    {
+        PuntajeTexto.text = "POINTS: " + puntaje;
+    }
+}

@@ -1,0 +1,18 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CamaraControler : MonoBehaviour
+{
+    public Transform target;
+    public float velocidad;
+    public Vector3 Pcamera;
+
+    private void FixedUpdate()
+    {
+        Vector3 Posicion = target.position + Pcamera;
+        Vector3 SPosicion = Vector3.Lerp(transform.position, Posicion, velocidad * Time.deltaTime);
+
+        transform.position = SPosicion;
+    }
+}

@@ -1,0 +1,42 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BulletController : MonoBehaviour
+{
+    
+    private Rigidbody2D _rb;
+    
+    public float velocidad = 10;
+    private PuntajeManagerController _controller;
+
+    public void SetController(PuntajeManagerController controller)
+    {
+        _controller = controller;
+    }
+    
+    void Start()
+    {
+        _rb = GetComponent<Rigidbody2D>();
+        _controller = GameObject.Find("PuntajeManager").GetComponent<PuntajeManagerController>();
+        
+        Destroy(this.gameObject, 4);
+    }
+    
+    void Update()
+    {
+        _rb.velocity = new Vector2(velocidad, _rb.velocity.y);
+    }
+
+    private void OnTriggerEnter2D(Collider2D col)
+    {
+        var tag = col.gameObject.tag;
+        if (tag == "Enemy")
+        {
+            Destroy(this.gameObject);
+            Destroy(col.gameObject);
+            _controller.IncrementarPuntaje(10);
+        }
+    }
+}
